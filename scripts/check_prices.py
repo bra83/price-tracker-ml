@@ -1,31 +1,32 @@
 import requests
 
-# =========================
-# FUNÇÃO: busca preço no Mercado Livre
-# =========================
-def get_price(query):
-    url = f"https://api.mercadolibre.com/sites/MLB/search?q={query}"
+API_URL = "https://api.mercadolibre.com/sites/MLB/search"
 
+
+def get_price(query):
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json"
     }
 
-    print(f"\n🌐 URL: {url}")
+    params = {
+        "q": query
+    }
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(API_URL, params=params, headers=headers, timeout=10)
 
+        print(f"\n🌐 URL: {response.url}")
         print(f"📡 Status code: {response.status_code}")
-        print(f"📄 Resposta bruta (primeiros 200 chars): {response.text[:200]}")
+        print(f"📄 Resposta bruta (primeiros 300 chars): {response.text[:300]}")
 
-        # Se API bloqueou ou deu erro
         if response.status_code != 200:
             print("❌ API bloqueada ou erro de requisição")
             return "N/A", 999999
 
         data = response.json()
 
-        # Segurança caso não venha "results"
+        # proteção contra resposta inválida
         if "results" not in data or not data["results"]:
             print("❌ Nenhum resultado retornado pela API")
             return "N/A", 999999
@@ -42,24 +43,16 @@ def get_price(query):
         return "N/A", 999999
 
 
-# =========================
-# MAIN
-# =========================
-if __name__ == "__main__":
-
+def main():
     print("🚀 Script iniciou")
 
-    products = [
-        {
-            "name": "SSD 1TB",
-            "query": "ssd 1tb",
-            "target_price": 300
-        }
+    produtos = [
+        {"name": "SSD 1TB", "query": "ssd 1tb", "target_price": 300}
     ]
 
-    print(f"📦 Produtos carregados: {products}")
+    print(f"📦 Produtos carregados: {produtos}")
 
-    for p in products:
+    for p in produtos:
         print(f"\n🔎 Produto: {p['name']}")
 
         title, price = get_price(p["query"])
@@ -69,8 +62,12 @@ if __name__ == "__main__":
         print(f"🎯 Preço alvo: {p['target_price']}")
 
         if price <= p["target_price"]:
-            print("🚨 OPORTUNIDADE! Preço abaixo do alvo")
+            print("🔥 ABAIXOU DO PREÇO!")
         else:
             print("📈 Ainda acima do alvo")
 
     print("\n✅ Script terminou")
+
+
+if __name__ == "__main__":
+    main()
