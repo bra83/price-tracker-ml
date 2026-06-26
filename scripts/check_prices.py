@@ -1,15 +1,8 @@
-import json
 import requests
 
-print("🚀 Script iniciou")
-
-# 1. carregar produtos
-with open("data/products.json", "r", encoding="utf-8") as f:
-    products = json.load(f)
-
-print("📦 Produtos carregados:", products)
-
-# 2. função que busca preço no Mercado Livre
+# =========================
+# FUNÇÃO: busca preço no Mercado Livre
+# =========================
 def get_price(query):
     url = f"https://api.mercadolibre.com/sites/MLB/search?q={query}"
 
@@ -17,37 +10,67 @@ def get_price(query):
         "User-Agent": "Mozilla/5.0"
     }
 
-    r = requests.get(url, headers=headers)
+    print(f"\n🌐 URL: {url}")
 
-    print("\n🌐 URL:", url)
-    print("📡 Status code:", r.status_code)
-    print("📄 Resposta bruta:", r.text[:300])
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
 
-    data = r.json()
+        print(f"📡 Status code: {response.status_code}")
+        print(f"📄 Resposta bruta (primeiros 200 chars): {response.text[:200]}")
 
-    if "results" not in data or len(data["results"]) == 0:
-        print("❌ Nenhum resultado retornado pela API")
+        # Se API bloqueou ou deu erro
+        if response.status_code != 200:
+            print("❌ API bloqueada ou erro de requisição")
+            return "N/A", 999999
+
+        data = response.json()
+
+        # Segurança caso não venha "results"
+        if "results" not in data or not data["results"]:
+            print("❌ Nenhum resultado retornado pela API")
+            return "N/A", 999999
+
+        first = data["results"][0]
+
+        title = first.get("title", "N/A")
+        price = first.get("price", 999999)
+
+        return title, price
+
+    except Exception as e:
+        print(f"❌ Erro na requisição: {e}")
         return "N/A", 999999
 
-    first = data["results"][0]
-    title = first["title"]
-    price = first["price"]
 
-    return title, price
+# =========================
+# MAIN
+# =========================
+if __name__ == "__main__":
 
-# 3. loop nos produtos
-for p in products:
-    print("\n🔎 Produto:", p["name"])
+    print("🚀 Script iniciou")
 
-    title, price = get_price(p["query"])
+    products = [
+        {
+            "name": "SSD 1TB",
+            "query": "ssd 1tb",
+            "target_price": 300
+        }
+    ]
 
-    print("📌 Título encontrado:", title)
-    print("💰 Preço atual:", price)
-    print("🎯 Preço alvo:", p["target_price"])
+    print(f"📦 Produtos carregados: {products}")
 
-    if price <= p["target_price"]:
-        print("🚨 PREÇO BAIXOU!")
-    else:
-        print("📈 Ainda acima do alvo")
+    for p in products:
+        print(f"\n🔎 Produto: {p['name']}")
 
-print("\n✅ Script terminou")
+        title, price = get_price(p["query"])
+
+        print(f"\n📌 Título encontrado: {title}")
+        print(f"💰 Preço atual: {price}")
+        print(f"🎯 Preço alvo: {p['target_price']}")
+
+        if price <= p["target_price"]:
+            print("🚨 OPORTUNIDADE! Preço abaixo do alvo")
+        else:
+            print("📈 Ainda acima do alvo")
+
+    print("\n✅ Script terminou")
