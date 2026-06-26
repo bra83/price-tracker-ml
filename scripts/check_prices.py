@@ -12,17 +12,23 @@ print("📦 Produtos carregados:", products)
 # 2. função que busca preço no Mercado Livre
 def get_price(query):
     url = f"https://api.mercadolibre.com/sites/MLB/search?q={query}"
-    
-    r = requests.get(url)
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    r = requests.get(url, headers=headers)
 
     print("\n🌐 URL:", url)
     print("📡 Status code:", r.status_code)
-    print("📄 Resposta bruta (primeiros 500 chars):")
-    print(r.text[:500])
+    print("📄 Resposta bruta:", r.text[:300])
 
     data = r.json()
 
-    # isso aqui pode falhar, mas agora queremos ver o motivo
+    if "results" not in data or len(data["results"]) == 0:
+        print("❌ Nenhum resultado retornado pela API")
+        return "N/A", 999999
+
     first = data["results"][0]
     title = first["title"]
     price = first["price"]
