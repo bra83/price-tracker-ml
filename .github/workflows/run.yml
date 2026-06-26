@@ -2,7 +2,7 @@ name: Price Check
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # a cada 6 horas
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
