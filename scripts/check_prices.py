@@ -1,27 +1,14 @@
-import requests
 import json
+import requests
 
-with open("data/products.json", "r") as f:
+print("🚀 Script iniciou")
+
+with open("data/products.json", "r", encoding="utf-8") as f:
     products = json.load(f)
 
+print("📦 Produtos carregados:", products)
+
 for p in products:
-    url = f"https://api.mercadolibre.com/sites/MLB/search?q={p['query']}"
-    res = requests.get(url).json()
+    print("🔎 Consultando:", p)
 
-    results = res.get("results", [])
-
-    if not results:
-        continue
-
-    best = results[0]
-    price = best["price"]
-    title = best["title"]
-    link = best["permalink"]
-
-    print(f"\nProduto: {p['name']}")
-    print(f"Melhor oferta: {title}")
-    print(f"Preço: R$ {price}")
-    print(f"Link: {link}")
-
-    if price <= p["target_price"]:
-        print("🔥 ALERTA: abaixo do preço alvo!")
+print("✅ Script terminou")
