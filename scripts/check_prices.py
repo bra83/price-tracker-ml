@@ -1,9 +1,23 @@
+import os
 import requests
 
-ACCESS_TOKEN = "APP_USR-5163526809822265-062620-b937f5e41a5e6fb0f04c40b044bd5363-77300613"
+ACCESS_TOKEN = os.getenv("ML_ACCESS_TOKEN")
 
-def buscar_produto(query):
-    url = f"https://api.mercadolibre.com/sites/MLB/search?q={query}"
+if not ACCESS_TOKEN:
+    raise Exception("ML_ACCESS_TOKEN não configurado no GitHub Secrets")
+
+products = [
+    {
+        "name": "SSD 1TB",
+        "query": "ssd 1tb",
+        "target_price": 300
+    }
+]
+
+for produto in products:
+    print("\n🔎 Produto:", produto["name"])
+
+    url = f"https://api.mercadolibre.com/sites/MLB/search?q={produto['query']}"
 
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}"
@@ -11,25 +25,31 @@ def buscar_produto(query):
 
     response = requests.get(url, headers=headers)
 
-    print("\n🔎 Produto:", query)
     print("📡 Status:", response.status_code)
 
     if response.status_code != 200:
         print("❌ Erro:", response.text)
-        return None
+        continue
 
     data = response.json()
-    item = data["results"][0]
 
-    return {
-        "title": item["title"],
-        "price": item["price"],
-        "link": item["permalink"]
-    }
+    results = data.get("results", [])
+    if not results:
+        print("❌ Nenhum resultado encontrado")
+        continue
 
+    produto_api = results[0]
 
-produto = buscar_produto("ssd 1tb")
+    title = produto_api.get("title", "N/A")
+    price = produto_api.get("price", 999999)
 
-print("\n📌 Produto:", produto["title"])
-print("💰 Preço:", produto["price"])
-print("🔗 Link:", produto["link"])
+    print("\n📌 Produto:", title)
+    print("💰 Preço atual:", price)
+    print("🎯 Preço alvo:", produto["target_price"])
+
+    if price <= produto["target_price"]:
+        print("🚨 PREÇO BAIXOU!")
+    else:
+        print("📈 Ainda acima do alvo")
+
+print("\n✅ Script terminou")
