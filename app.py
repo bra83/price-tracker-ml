@@ -3,13 +3,12 @@ import requests
 
 app = Flask(__name__)
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "application/json"
-}
+@app.route("/")
+def home():
+    return "ML Proxy OK"
 
-@app.route("/search")
-def search():
+@app.route("/price")
+def price():
     query = request.args.get("q")
 
     if not query:
@@ -17,15 +16,18 @@ def search():
 
     url = "https://api.mercadolibre.com/sites/MLB/search"
 
-    r = requests.get(url, params={"q": query}, headers=HEADERS)
+    r = requests.get(url, params={"q": query})
 
-    return jsonify(r.json())
+    data = r.json()
+    results = data.get("results", [])
 
+    if not results:
+        return jsonify({"error": "no results"}), 404
 
-@app.route("/")
-def home():
-    return "ML Proxy OK"
+    item = results[0]
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    return jsonify({
+        "title": item["title"],
+        "price": item["price"],
+        "link": item["permalink"]
+    })
