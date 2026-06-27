@@ -8,12 +8,21 @@ products = [
     }
 ]
 
+headers = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json"
+}
+
 for produto in products:
     print("\n🔎 Produto:", produto["name"])
 
-    url = f"https://api.mercadolibre.com/sites/MLB/search?q={produto['query']}"
+    url = f"https://api.mercadolibre.com/sites/MLB/search"
 
-    response = requests.get(url)
+    params = {
+        "q": produto["query"]
+    }
+
+    response = requests.get(url, headers=headers, params=params)
 
     print("📡 Status:", response.status_code)
 
@@ -22,7 +31,6 @@ for produto in products:
         continue
 
     data = response.json()
-
     results = data.get("results", [])
 
     if not results:
