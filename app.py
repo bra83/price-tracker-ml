@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -15,7 +16,6 @@ def price():
         return jsonify({"error": "missing query"}), 400
 
     url = "https://api.mercadolibre.com/sites/MLB/search"
-
     r = requests.get(url, params={"q": query})
 
     data = r.json()
@@ -31,3 +31,7 @@ def price():
         "price": item["price"],
         "link": item["permalink"]
     })
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
