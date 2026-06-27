@@ -1,68 +1,66 @@
 import requests
+import os
 
-API_URL = "https://api.mercadolibre.com/sites/MLB/search"
+# 🔐 Coloque seu token aqui OU use variável de ambiente
+ACCESS_TOKEN = os.getenv("MELI_ACCESS_TOKEN") or "APP_USR-5163526809822265-062620-b937f5e41a5e6fb0f04c40b044bd5363-77300613"
 
+PRODUCTS = [
+    {
+        "name": "SSD 1TB",
+        "query": "ssd 1tb",
+        "target_price": 300
+    }
+]
 
-def get_price(query):
+def buscar_produto(query):
+    url = f"https://api.mercadolibre.com/sites/MLB/search?q={query}"
+
     headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json"
+        "Authorization": f"Bearer {ACCESS_TOKEN}"
     }
 
-    params = {
-        "q": query
+    response = requests.get(url, headers=headers)
+
+    print("\n🔎 Produto:", query)
+    print("🌐 URL:", url)
+    print("📡 Status code:", response.status_code)
+
+    if response.status_code != 200:
+        print("❌ Erro na API:", response.text)
+        return None
+
+    data = response.json()
+
+    if "results" not in data or len(data["results"]) == 0:
+        print("❌ Nenhum resultado")
+        return None
+
+    item = data["results"][0]
+
+    return {
+        "title": item["title"],
+        "price": item["price"],
+        "link": item["permalink"]
     }
-
-    try:
-        response = requests.get(API_URL, params=params, headers=headers, timeout=10)
-
-        print(f"\n🌐 URL: {response.url}")
-        print(f"📡 Status code: {response.status_code}")
-        print(f"📄 Resposta bruta (primeiros 300 chars): {response.text[:300]}")
-
-        if response.status_code != 200:
-            print("❌ API bloqueada ou erro de requisição")
-            return "N/A", 999999
-
-        data = response.json()
-
-        # proteção contra resposta inválida
-        if "results" not in data or not data["results"]:
-            print("❌ Nenhum resultado retornado pela API")
-            return "N/A", 999999
-
-        first = data["results"][0]
-
-        title = first.get("title", "N/A")
-        price = first.get("price", 999999)
-
-        return title, price
-
-    except Exception as e:
-        print(f"❌ Erro na requisição: {e}")
-        return "N/A", 999999
 
 
 def main():
     print("🚀 Script iniciou")
 
-    produtos = [
-        {"name": "SSD 1TB", "query": "ssd 1tb", "target_price": 300}
-    ]
+    for product in PRODUCTS:
+        result = buscar_produto(product["query"])
 
-    print(f"📦 Produtos carregados: {produtos}")
+        if not result:
+            print("📌 Produto não encontrado")
+            continue
 
-    for p in produtos:
-        print(f"\n🔎 Produto: {p['name']}")
+        print("📌 Título:", result["title"])
+        print("💰 Preço atual:", result["price"])
+        print("🎯 Preço alvo:", product["target_price"])
 
-        title, price = get_price(p["query"])
-
-        print(f"\n📌 Título encontrado: {title}")
-        print(f"💰 Preço atual: {price}")
-        print(f"🎯 Preço alvo: {p['target_price']}")
-
-        if price <= p["target_price"]:
-            print("🔥 ABAIXOU DO PREÇO!")
+        if result["price"] <= product["target_price"]:
+            print("🔥 PREÇO BAIXOU! ALERTA!")
+            print(result["link"])
         else:
             print("📈 Ainda acima do alvo")
 
