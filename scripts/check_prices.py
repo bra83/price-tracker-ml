@@ -1,10 +1,4 @@
-import os
 import requests
-
-ACCESS_TOKEN = os.getenv("ML_ACCESS_TOKEN")
-
-if not ACCESS_TOKEN:
-    raise Exception("ML_ACCESS_TOKEN não configurado no GitHub Secrets")
 
 products = [
     {
@@ -19,11 +13,7 @@ for produto in products:
 
     url = f"https://api.mercadolibre.com/sites/MLB/search?q={produto['query']}"
 
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}"
-    }
-
-    response = requests.get(url, headers=headers)
+    response = requests.get(url)
 
     print("📡 Status:", response.status_code)
 
@@ -34,22 +24,14 @@ for produto in products:
     data = response.json()
 
     results = data.get("results", [])
+
     if not results:
-        print("❌ Nenhum resultado encontrado")
+        print("❌ Nenhum resultado")
         continue
 
-    produto_api = results[0]
+    item = results[0]
 
-    title = produto_api.get("title", "N/A")
-    price = produto_api.get("price", 999999)
-
-    print("\n📌 Produto:", title)
-    print("💰 Preço atual:", price)
-    print("🎯 Preço alvo:", produto["target_price"])
-
-    if price <= produto["target_price"]:
-        print("🚨 PREÇO BAIXOU!")
-    else:
-        print("📈 Ainda acima do alvo")
+    print("\n📌 Produto:", item.get("title"))
+    print("💰 Preço:", item.get("price"))
 
 print("\n✅ Script terminou")
