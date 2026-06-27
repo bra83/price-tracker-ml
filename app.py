@@ -1,37 +1,42 @@
 from flask import Flask, request, jsonify
 import requests
-import os
 
 app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "ML Proxy OK"
+    return {"status": "ML Proxy OK"}
 
-@app.route("/price")
-def price():
-    query = request.args.get("q")
+@app.route("/search")
+def search():
+    q = request.args.get("q")
 
-    if not query:
-        return jsonify({"error": "missing query"}), 400
+    if not q:
+        return {"error": "missing query param ?q="}, 400
 
     url = "https://api.mercadolibre.com/sites/MLB/search"
-    r = requests.get(url, params={"q": query})
+    response = requests.get(url, params={"q": q})
 
-    data = r.json()
+    if response.status_code != 200:
+        return {
+            "error": "api error",
+            "status": response.status_code,
+            "detail": response.text
+        }, 500
+
+    data = response.json()
     results = data.get("results", [])
 
     if not results:
-        return jsonify({"error": "no results"}), 404
+        return {"error": "no results", "query": q}
 
     item = results[0]
 
-    return jsonify({
-        "title": item["title"],
-        "price": item["price"],
-        "link": item["permalink"]
-    })
+    return {
+        "title": item.get("title"),
+        "price": item.get("price"),
+        "url": item.get("permalink")
+    }
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=10000)
